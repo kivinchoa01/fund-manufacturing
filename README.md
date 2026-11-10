@@ -96,6 +96,10 @@ python -m http.server 8000
   git push origin master && git push github master
   ```
 
+### 关于 Gitee
+
+Gitee 仓库仅作代码镜像：Gitee Pages 已下线；Gitee raw 对大文件要求登录（实测返回 `large file require login for access`），不能作为 PDF 外链或网页托管。国内访问如不稳定，可在阅读页切换 jsDelivr 线路，或把整个静态目录另行部署到学校服务器 / 国内静态托管。
+
 ## PDF.js 定制说明
 
 `docs/pdfjs/` 为 PDF.js 3.11（legacy 版）。为适配本项目，在官方发行版基础上做了以下修改，**升级 PDF.js 时需重新应用**：
