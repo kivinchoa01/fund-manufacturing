@@ -1,6 +1,6 @@
 /* 机械制造基础 II 课程章节清单
  * 首页 index.html 与阅读页 viewer.html 共用此文件。
- * 更新讲义时只需替换 pdf/ 下的文件，并同步本文件中的 pages 字段。 */
+ * 更新讲义时替换 pdf/ 下的文件，同步 pages 字段，并把 rev 改成新日期。 */
 window.COURSE = {
   title: '机械制造基础 II',
   subtitle: '课程讲义',
@@ -10,6 +10,8 @@ window.COURSE = {
   site: 'https://kivinchoa01.github.io/fund-manufacturing/',
   gitee: 'https://gitee.com/zhou-jiming/fund-manufacturing',
   github: 'https://github.com/kivinchoa01/fund-manufacturing',
+  // 讲义版本号：更新 PDF 后改成新日期，强制浏览器重新下载，避免旧缓存
+  rev: '20261111',
   // PDF.js 阅读器内加载 PDF 的两条线路
   cdnBase: 'https://cdn.jsdelivr.net/gh/kivinchoa01/fund-manufacturing@master/pdf/',
   localBase: 'pdf/'

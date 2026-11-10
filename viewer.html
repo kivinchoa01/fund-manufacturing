@@ -231,10 +231,14 @@
     return -1;
   }
   function localPdfUrl(ch) {
-    return new URL((COURSE.localBase || 'pdf/') + ch.file, window.location.href).href;
+    var u = new URL((COURSE.localBase || 'pdf/') + ch.file, window.location.href);
+    if (COURSE.rev) u.searchParams.set('v', COURSE.rev);
+    return u.href;
   }
   function cdnPdfUrl(ch) {
-    return (COURSE.cdnBase || '') + encodeURIComponent(ch.file);
+    var u = (COURSE.cdnBase || '') + encodeURIComponent(ch.file);
+    if (COURSE.rev) u += '?v=' + encodeURIComponent(COURSE.rev);
+    return u;
   }
   function pdfUrl(ch, line) {
     return line === 'local' ? localPdfUrl(ch) : cdnPdfUrl(ch);

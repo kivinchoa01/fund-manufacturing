@@ -65,9 +65,10 @@ python -m http.server 8000
 
 ## 更新讲义
 
-1. 用新文件覆盖 `pdf/` 下对应 PDF（文件名保持不变最省事）。
-2. 若页数或章节标题有变化，同步修改 `chapters.js` 中的 `pages`、`title`、`desc` 等字段。
-3. 提交并推送到两个远程仓库：
+1. 用新文件覆盖 `pdf/` 下对应 PDF，**文件名必须与原来完全一致**（大小写、中文、扩展名都要一致）。
+2. 若页数、标题或简介有变化，同步修改 `chapters.js` 中对应章节的 `pages`、`title`、`tagline`、`desc` 等字段。
+3. 把 `chapters.js` 中 `COURSE.rev` 改成新日期（例如 `20261111`）。PDF 链接会带 `?v=版本号`，这样浏览器不会继续用旧缓存；不改也能在缓存过期后更新，但可能短时间看到旧讲义。
+4. 提交并推送到两个远程仓库：
 
    ```bash
    git add -A
@@ -76,13 +77,15 @@ python -m http.server 8000
    git push github master
    ```
 
-4. GitHub Pages 会自动发布；jsDelivr 的 `@master` 缓存最长约 12 小时。需要立即刷新某份 PDF 的 CDN 缓存时访问：
+5. GitHub Pages 会自动发布。jsDelivr 的 `@master` 缓存最长约 12 小时；需要立即刷新某份 PDF 的 CDN 缓存时访问：
 
    ```
    https://purge.jsdelivr.net/gh/kivinchoa01/fund-manufacturing@master/pdf/<文件名>
    ```
 
    如果 CDN 暂时仍是旧版本或加载较慢，阅读页可点“本站直连”直接读取站点文件。新仓库刚推送时 jsDelivr 可能先 301 回源到 `raw.githubusercontent.com`，此阶段速度较慢，阅读页会自动回退到本站直连。
+
+> 只换 PDF 内容、页数和标题都不变时，最少只需：覆盖文件 → 改 `rev` → `git add/commit/push`。
 
 ## 部署说明
 
