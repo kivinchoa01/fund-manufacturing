@@ -11,7 +11,7 @@ window.COURSE = {
   gitee: 'https://gitee.com/zhou-jiming/fund-manufacturing',
   github: 'https://github.com/kivinchoa01/fund-manufacturing',
   // 讲义版本号：更新 PDF 后改成新日期，强制浏览器重新下载，避免旧缓存
-  rev: '20261111',
+  rev: '20261111-2',
   // PDF.js 阅读器内加载 PDF 的两条线路
   cdnBase: 'https://cdn.jsdelivr.net/gh/kivinchoa01/fund-manufacturing@master/pdf/',
   localBase: 'pdf/'
