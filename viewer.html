@@ -209,9 +209,9 @@
 
   function readLinePreference() {
     try {
-      return localStorage.getItem(LINE_KEY) === 'local' ? 'local' : 'cdn';
+      return localStorage.getItem(LINE_KEY) === 'cdn' ? 'cdn' : 'local';
     } catch (e) {
-      return 'cdn';
+      return 'local';
     }
   }
   function saveLinePreference(line) {
@@ -287,11 +287,27 @@
 
   var current = null;
   var loadToken = 0;
+  var watchdogTimer = null;
 
   function updateLineUi(line) {
     lineBadge.textContent = line === 'local' ? '本站直连' : 'jsDelivr CDN';
     lineBadge.className = 'badge' + (line === 'local' ? ' local' : '');
-    lineToggle.textContent = line === 'local' ? '使用 CDN' : '备用线路';
+    lineToggle.textContent = line === 'local' ? '使用 CDN' : '本站直连';
+  }
+
+  function stopWatchdog() {
+    if (watchdogTimer) {
+      clearInterval(watchdogTimer);
+      watchdogTimer = null;
+    }
+  }
+
+  function fallbackToLocal(token) {
+    if (token !== loadToken || !current) return;
+    stopWatchdog();
+    saveLinePreference('local');
+    updateLineUi('local');
+    frame.src = viewerSrc(current, 'local');
   }
 
   // 用 HEAD 探测 CDN 是否可用；失败则自动切回本站直连。
@@ -318,18 +334,41 @@
     if (!current) return;
     var token = ++loadToken;
     var line = readLinePreference();
+    stopWatchdog();
     updateLineUi(line);
     loading.classList.remove('hidden');
     frame.src = viewerSrc(current, line);
 
-    if (line === 'cdn') {
-      probeCdn(pdfUrl(current, 'cdn')).then(function (ok) {
-        if (ok || token !== loadToken || !current) return;
-        saveLinePreference('local');
-        updateLineUi('local');
-        frame.src = viewerSrc(current, 'local');
-      });
-    }
+    if (line !== 'cdn') return;
+
+    // CDN 探测失败（404 / 被墙 / 超时）时直接切回本站。
+    probeCdn(pdfUrl(current, 'cdn')).then(function (ok) {
+      if (!ok) fallbackToLocal(token);
+    });
+
+    // 探测成功但实际下载很慢（jsDelivr 回源到 raw.githubusercontent.com 时
+    // 常见）时，10 秒内没有开始渲染就自动改用本站文件。
+    var started = Date.now();
+    watchdogTimer = setInterval(function () {
+      if (token !== loadToken || !current) {
+        stopWatchdog();
+        return;
+      }
+      var doc;
+      try { doc = frame.contentDocument; } catch (e) { return; }
+      if (!doc) return;
+      var err = doc.getElementById('errorWrapper');
+      if (err && !err.hidden) {
+        fallbackToLocal(token);
+        return;
+      }
+      var app = doc.defaultView && doc.defaultView.PDFViewerApplication;
+      if (app && app.pagesCount > 0) {
+        stopWatchdog();
+        return;
+      }
+      if (Date.now() - started > 10000) fallbackToLocal(token);
+    }, 1000);
   }
 
   populateSelect();
