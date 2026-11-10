@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>课程讲义 · 机械制造基础 II</title>
+<meta name="description" content="机械制造基础 II 课程讲义在线阅读器。">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --red: #7a1f1f;
+    --red-bright: #b84444;
+    --bg: #1b1b1f;
+    --surface: #23252c;
+    --line: rgba(255, 255, 255, .12);
+    --text: #ececf0;
+    --muted: #9ba0ab;
+    --font-body: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    display: flex; flex-direction: column;
+    background: var(--bg); color: var(--text);
+    font-family: var(--font-body);
+    overflow: hidden;
+  }
+  button, select, a { font-family: inherit; }
+
+  /* ---------- 顶栏 ---------- */
+  header {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 9px 16px;
+    background: linear-gradient(180deg, #7a1f1f 0%, #651a1a 100%);
+    border-bottom: 1px solid rgba(255, 255, 255, .16);
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .32);
+    z-index: 10;
+  }
+  .back {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: #fff; text-decoration: none; font-size: 13px; white-space: nowrap;
+    padding: 5px 11px; border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px;
+    transition: background .18s ease;
+  }
+  .back:hover { background: rgba(255, 255, 255, .14); }
+  .chapter-head {
+    display: flex; align-items: baseline; gap: 10px; min-width: 0;
+  }
+  .chapter-head .num {
+    font-size: 12px; letter-spacing: 1px; color: rgba(255, 255, 255, .68);
+    white-space: nowrap;
+  }
+  .chapter-head h1 {
+    margin: 0; font-size: 16px; font-weight: 600; letter-spacing: .5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 42vw;
+  }
+  .controls {
+    display: flex; align-items: center; gap: 6px; margin-left: auto;
+  }
+  .controls select {
+    max-width: 240px; padding: 5px 26px 5px 10px;
+    color: #fff; background: rgba(0, 0, 0, .22);
+    border: 1px solid rgba(255, 255, 255, .4); border-radius: 999px;
+    font-size: 12.5px; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #fff 50%),
+                      linear-gradient(135deg, #fff 50%, transparent 50%);
+    background-position: calc(100% - 14px) 50%, calc(100% - 9px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+  }
+  .controls select option { color: #222; background: #fff; }
+  .step {
+    display: inline-grid; place-items: center;
+    width: 30px; height: 30px; border-radius: 50%;
+    color: #fff; text-decoration: none; font-size: 18px; line-height: 1;
+    border: 1px solid rgba(255, 255, 255, .4);
+    transition: background .18s ease, opacity .18s ease;
+  }
+  .step:hover { background: rgba(255, 255, 255, .14); }
+  .step.disabled { opacity: .32; pointer-events: none; }
+  .actions { display: flex; align-items: center; gap: 6px; }
+  .actions a, .actions button {
+    display: inline-flex; align-items: center; gap: 5px;
+    color: #fff; text-decoration: none; font-size: 12.5px; white-space: nowrap;
+    background: transparent; border: 1px solid rgba(255, 255, 255, .4);
+    border-radius: 999px; padding: 5px 11px; cursor: pointer;
+    transition: background .18s ease;
+  }
+  .actions a:hover, .actions button:hover { background: rgba(255, 255, 255, .14); }
+  .actions .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11.5px; color: rgba(255, 255, 255, .78); white-space: nowrap;
+  }
+  .actions .badge::before {
+    content: ""; width: 6px; height: 6px; border-radius: 50%; background: #8fd18a;
+  }
+  .actions .badge.local::before { background: #e0b45a; }
+  .actions .badge.offline::before { background: #d96a6a; }
+
+  /* ---------- 阅读区 ---------- */
+  main {
+    position: relative; flex: 1; min-height: 0;
+    background: #525659;
+  }
+  #pdf-frame { display: block; width: 100%; height: 100%; border: 0; }
+  #loading {
+    position: absolute; inset: 0; z-index: 5;
+    display: grid; place-items: center;
+    background: #2b2d33; color: #cfd3da; font-size: 14px;
+    transition: opacity .25s ease;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+  .spinner {
+    width: 26px; height: 26px; margin-right: 12px;
+    border: 2px solid rgba(255, 255, 255, .2);
+    border-top-color: #fff; border-radius: 50%;
+    display: inline-block; vertical-align: middle;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #error {
+    position: absolute; inset: 0; z-index: 6;
+    display: none; place-items: center; padding: 24px;
+    background: #22242a; color: var(--text); text-align: center;
+  }
+  #error.show { display: grid; }
+  #error h2 { margin: 0 0 10px; font-size: 20px; }
+  #error p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+  #error a {
+    display: inline-block; padding: 9px 18px; border-radius: 999px;
+    background: var(--red-bright); color: #fff; text-decoration: none; font-size: 13px;
+  }
+
+  /* ---------- 移动端 ---------- */
+  @media (max-width: 900px) {
+    header { gap: 8px; padding: 8px 10px; }
+    .chapter-head h1 { max-width: 30vw; font-size: 14px; }
+    .controls select { max-width: 150px; }
+    .actions .label { display: none; }
+    .actions a, .actions button { padding: 5px 9px; }
+  }
+  @media (max-width: 640px) {
+    .back .label, .actions .badge { display: none; }
+    .chapter-head .num { display: none; }
+    .chapter-head h1 { max-width: 36vw; }
+    .controls select { max-width: 112px; }
+    .actions #external { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation-duration: .01ms !important; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="index.html"><span aria-hidden="true">←</span><span class="label">目录</span></a>
+  <div class="chapter-head">
+    <span class="num" id="ch-num">第 01 讲</span>
+    <h1 id="ch-title">课程概述</h1>
+  </div>
+  <div class="controls">
+    <label for="ch-select" class="sr-only" style="position:absolute;left:-9999px">选择章节</label>
+    <select id="ch-select" aria-label="选择章节"></select>
+    <a class="step" id="prev" href="#" aria-label="上一讲" title="上一讲">‹</a>
+    <a class="step" id="next" href="#" aria-label="下一讲" title="下一讲">›</a>
+  </div>
+  <div class="actions">
+    <span class="badge" id="line-badge" title="当前 PDF 加载线路">CDN</span>
+    <button type="button" id="line-toggle" title="在 jsDelivr CDN 与本站直连之间切换">备用线路</button>
+    <a id="download" href="#" download>下载 <span class="label">PDF</span></a>
+    <a id="external" href="#" target="_blank" rel="noopener">原始 PDF</a>
+  </div>
+</header>
+
+<main>
+  <iframe id="pdf-frame" title="课程讲义" allow="fullscreen" allowfullscreen></iframe>
+  <div id="loading"><span><span class="spinner"></span>正在加载讲义…</span></div>
+  <div id="error" role="alert">
+    <div>
+      <h2>没有找到这一讲</h2>
+      <p>章节编号无效，或讲义清单尚未加载。</p>
+      <a href="index.html">返回章节目录</a>
+    </div>
+  </div>
+</main>
+
+<script src="chapters.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var COURSE = window.COURSE || {};
+  var CHAPTERS = window.CHAPTERS || [];
+  var frame = document.getElementById('pdf-frame');
+  var loading = document.getElementById('loading');
+  var errorBox = document.getElementById('error');
+  var chNum = document.getElementById('ch-num');
+  var chTitle = document.getElementById('ch-title');
+  var select = document.getElementById('ch-select');
+  var prev = document.getElementById('prev');
+  var next = document.getElementById('next');
+  var download = document.getElementById('download');
+  var external = document.getElementById('external');
+  var lineBadge = document.getElementById('line-badge');
+  var lineToggle = document.getElementById('line-toggle');
+  var LINE_KEY = 'fm-pdf-line';
+
+  function readLinePreference() {
+    try {
+      return localStorage.getItem(LINE_KEY) === 'local' ? 'local' : 'cdn';
+    } catch (e) {
+      return 'cdn';
+    }
+  }
+  function saveLinePreference(line) {
+    try { localStorage.setItem(LINE_KEY, line); } catch (e) { /* 忽略隐私模式限制 */ }
+  }
+
+  function findChapter(id) {
+    for (var i = 0; i < CHAPTERS.length; i++) {
+      if (CHAPTERS[i].id === id) return CHAPTERS[i];
+    }
+    return null;
+  }
+  function chapterIndex(id) {
+    for (var i = 0; i < CHAPTERS.length; i++) {
+      if (CHAPTERS[i].id === id) return i;
+    }
+    return -1;
+  }
+  function localPdfUrl(ch) {
+    return new URL((COURSE.localBase || 'pdf/') + ch.file, window.location.href).href;
+  }
+  function cdnPdfUrl(ch) {
+    return (COURSE.cdnBase || '') + encodeURIComponent(ch.file);
+  }
+  function pdfUrl(ch, line) {
+    return line === 'local' ? localPdfUrl(ch) : cdnPdfUrl(ch);
+  }
+  function viewerSrc(ch, line) {
+    return 'docs/pdfjs/web/viewer.html?file=' + encodeURIComponent(pdfUrl(ch, line)) +
+           '&locale=zh-CN#pagemode=none';
+  }
+  function viewerPage(ch) {
+    return 'viewer.html?ch=' + encodeURIComponent(ch.id);
+  }
+
+  /* ---------- 章节切换 ---------- */
+  function populateSelect() {
+    select.innerHTML = CHAPTERS.map(function (ch) {
+      return '<option value="' + ch.id + '">第 ' + ch.id + ' 讲 · ' + ch.title + '</option>';
+    }).join('');
+  }
+
+  function renderChapter(ch) {
+    var idx = chapterIndex(ch.id);
+    chNum.textContent = '第 ' + ch.id + ' 讲';
+    chTitle.textContent = ch.title;
+    document.title = ch.title + ' · 机械制造基础 II';
+    select.value = ch.id;
+
+    if (idx > 0) {
+      prev.href = viewerPage(CHAPTERS[idx - 1]);
+      prev.classList.remove('disabled');
+      prev.title = '上一讲：' + CHAPTERS[idx - 1].title;
+    } else {
+      prev.removeAttribute('href');
+      prev.classList.add('disabled');
+      prev.title = '已经是第一讲';
+    }
+    if (idx >= 0 && idx < CHAPTERS.length - 1) {
+      next.href = viewerPage(CHAPTERS[idx + 1]);
+      next.classList.remove('disabled');
+      next.title = '下一讲：' + CHAPTERS[idx + 1].title;
+    } else {
+      next.removeAttribute('href');
+      next.classList.add('disabled');
+      next.title = '已经是最后一讲';
+    }
+
+    download.href = localPdfUrl(ch);
+    download.setAttribute('download', ch.file);
+    external.href = localPdfUrl(ch);
+  }
+
+  var current = null;
+  var loadToken = 0;
+
+  function updateLineUi(line) {
+    lineBadge.textContent = line === 'local' ? '本站直连' : 'jsDelivr CDN';
+    lineBadge.className = 'badge' + (line === 'local' ? ' local' : '');
+    lineToggle.textContent = line === 'local' ? '使用 CDN' : '备用线路';
+  }
+
+  // 用 HEAD 探测 CDN 是否可用；失败则自动切回本站直连。
+  // 只探测、不等待，PDF 会先按所选线路开始加载。
+  function probeCdn(url) {
+    if (!/^https?:/i.test(url) || !window.fetch) return Promise.resolve(false);
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function () { if (ctrl) ctrl.abort(); }, 6000);
+    return fetch(url, {
+      method: 'HEAD',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: ctrl ? ctrl.signal : undefined
+    }).then(function (r) {
+      clearTimeout(timer);
+      return r.ok;
+    }).catch(function () {
+      clearTimeout(timer);
+      return false;
+    });
+  }
+
+  function loadPdf() {
+    if (!current) return;
+    var token = ++loadToken;
+    var line = readLinePreference();
+    updateLineUi(line);
+    loading.classList.remove('hidden');
+    frame.src = viewerSrc(current, line);
+
+    if (line === 'cdn') {
+      probeCdn(pdfUrl(current, 'cdn')).then(function (ok) {
+        if (ok || token !== loadToken || !current) return;
+        saveLinePreference('local');
+        updateLineUi('local');
+        frame.src = viewerSrc(current, 'local');
+      });
+    }
+  }
+
+  populateSelect();
+
+  var qs = new URLSearchParams(window.location.search);
+  var wanted = qs.get('ch') || (CHAPTERS[0] && CHAPTERS[0].id) || '';
+  current = findChapter(wanted);
+
+  if (!current) {
+    errorBox.classList.add('show');
+    loading.classList.add('hidden');
+    return;
+  }
+
+  renderChapter(current);
+
+  frame.addEventListener('load', function () {
+    loading.classList.add('hidden');
+  });
+  frame.addEventListener('load', setupLinkPanel);
+
+  loadPdf();
+
+  select.addEventListener('change', function () {
+    var ch = findChapter(select.value);
+    if (!ch) return;
+    window.location.href = viewerPage(ch);
+  });
+
+  lineToggle.addEventListener('click', function () {
+    var nextLine = readLinePreference() === 'local' ? 'cdn' : 'local';
+    saveLinePreference(nextLine);
+    loadPdf();
+  });
+
+  /* ---------- 讲义内外部链接浮层 ---------- */
+  var PANEL_ID = 'fm-link-panel';
+  var BACKDROP_ID = 'fm-link-backdrop';
+
+  function embedUrl(url) {
+    try {
+      var u = new URL(url);
+      if (/(^|\.)bilibili\.com$/i.test(u.hostname) && /^\/video\//.test(u.pathname)) {
+        var m = u.pathname.match(/\/video\/(BV[0-9A-Za-z]+)/);
+        if (m) {
+          return 'https://player.bilibili.com/player.html?bvid=' + m[1] + '&page=1&autoplay=0';
+        }
+      }
+    } catch (e) { /* 保持原地址 */ }
+    return url;
+  }
+
+  function removePanel(doc) {
+    var panel = doc.getElementById(PANEL_ID);
+    if (panel) {
+      var f = panel.querySelector('.fm-frame');
+      if (f) f.src = 'about:blank';
+      panel.remove();
+    }
+    var backdrop = doc.getElementById(BACKDROP_ID);
+    if (backdrop) backdrop.remove();
+  }
+
+  function openPanel(url, doc) {
+    var host = doc.getElementById('viewerContainer') || doc.body;
+    var panel = doc.getElementById(PANEL_ID);
+
+    if (!panel) {
+      var style = doc.createElement('style');
+      style.textContent = [
+        '#' + PANEL_ID + ' { position: fixed; left: 50%; top: 50%;',
+        '  transform: translate(-50%, -50%); width: min(960px, 78vw);',
+        '  height: min(620px, 76vh); min-width: 340px; min-height: 240px;',
+        '  display: flex; flex-direction: column; overflow: hidden; resize: both;',
+        '  background: #fff; border-radius: 10px;',
+        '  box-shadow: 0 24px 80px rgba(0,0,0,.55); z-index: 60002; }',
+        '#' + PANEL_ID + ' .fm-bar { display: flex; align-items: center; gap: 8px;',
+        '  padding: 7px 12px; background: #7a1f1f; color: #fff;',
+        '  font: 13px/1.4 "Microsoft YaHei", system-ui, sans-serif; }',
+        '#' + PANEL_ID + ' .fm-title { flex: 1; overflow: hidden;',
+        '  text-overflow: ellipsis; white-space: nowrap; }',
+        '#' + PANEL_ID + ' button { font: 12px/1 inherit; color: #fff;',
+        '  background: transparent; border: 1px solid rgba(255,255,255,.55);',
+        '  border-radius: 12px; padding: 4px 9px; cursor: pointer; }',
+        '#' + PANEL_ID + ' button:hover { background: rgba(255,255,255,.15); }',
+        '#' + PANEL_ID + ' .fm-close { font-size: 16px; line-height: 1;',
+        '  padding: 0 8px; border-radius: 50%; }',
+        '#' + PANEL_ID + ' iframe { flex: 1; width: 100%; border: 0; background: #fff; }',
+        '#' + BACKDROP_ID + ' { position: fixed; inset: 0; z-index: 60001;',
+        '  background: rgba(0,0,0,.42); }',
+        '@media (max-width: 720px) {',
+        '  #' + PANEL_ID + ' { width: 94vw; height: 74vh; }',
+        '}'
+      ].join('\n');
+      doc.head.appendChild(style);
+
+      var backdrop = doc.createElement('div');
+      backdrop.id = BACKDROP_ID;
+      backdrop.addEventListener('click', function () { removePanel(doc); });
+      host.appendChild(backdrop);
+
+      panel = doc.createElement('div');
+      panel.id = PANEL_ID;
+      panel.innerHTML =
+        '<div class="fm-bar"><span class="fm-title"></span>' +
+        '<button type="button" class="fm-ext">新窗口</button>' +
+        '<button type="button" class="fm-close" aria-label="关闭">×</button></div>' +
+        '<iframe class="fm-frame" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';
+      host.appendChild(panel);
+
+      // 阻止演示模式的“点击翻页”处理接管浮层内的交互
+      ['mousedown', 'click', 'dblclick'].forEach(function (t) {
+        panel.addEventListener(t, function (e) { e.stopPropagation(); });
+      });
+
+      panel.querySelector('.fm-close').addEventListener('click', function () {
+        removePanel(doc);
+      });
+      panel.querySelector('.fm-ext').addEventListener('click', function () {
+        var w = Math.min(960, Math.round(screen.availWidth * 0.7));
+        var h = Math.min(640, Math.round(screen.availHeight * 0.7));
+        var left = Math.round((screen.availWidth - w) / 2);
+        var top = Math.round((screen.availHeight - h) / 2);
+        window.open(panel.dataset.url, '_blank',
+          'popup=yes,width=' + w + ',height=' + h + ',left=' + left + ',top=' + top);
+      });
+    }
+
+    var embed = embedUrl(url);
+    panel.dataset.url = url;
+    var title = url;
+    try {
+      var u = new URL(url);
+      title = u.hostname + (embed !== url ? ' · B站播放器' : '');
+    } catch (e) { /* 保持原地址 */ }
+    panel.querySelector('.fm-title').textContent = title;
+    var f = panel.querySelector('.fm-frame');
+    if (f.getAttribute('src') !== embed) f.src = embed;
+  }
+
+  function setupLinkPanel() {
+    var doc;
+    try { doc = frame.contentDocument; } catch (e) { return; }
+    if (!doc) return;
+
+    doc.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('a[href]') : null;
+      if (!a) return;
+      var href = a.href;
+      if (!/^https?:\/\//i.test(href)) return;
+      var sec = a.closest('section');
+      if (sec && sec.hasAttribute('data-internal-link')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      openPanel(href, doc);
+    }, true);
+
+    doc.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') removePanel(doc);
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && frame.contentDocument) removePanel(frame.contentDocument);
+  });
+})();
+</script>
+</body>
+</html>
