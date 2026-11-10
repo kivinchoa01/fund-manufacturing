@@ -288,6 +288,7 @@
   var current = null;
   var loadToken = 0;
   var watchdogTimer = null;
+  var frameDoc = null;
 
   function updateLineUi(line) {
     lineBadge.textContent = line === 'local' ? '本站直连' : 'jsDelivr CDN';
@@ -307,6 +308,7 @@
     stopWatchdog();
     saveLinePreference('local');
     updateLineUi('local');
+    frameDoc = null;
     frame.src = viewerSrc(current, 'local');
   }
 
@@ -337,6 +339,7 @@
     stopWatchdog();
     updateLineUi(line);
     loading.classList.remove('hidden');
+    frameDoc = null;
     frame.src = viewerSrc(current, line);
 
     if (line !== 'cdn') return;
@@ -356,14 +359,15 @@
       }
       var doc;
       try { doc = frame.contentDocument; } catch (e) { return; }
-      if (!doc) return;
+      if (!doc || doc !== frameDoc) return;
       var err = doc.getElementById('errorWrapper');
       if (err && !err.hidden) {
         fallbackToLocal(token);
         return;
       }
       var app = doc.defaultView && doc.defaultView.PDFViewerApplication;
-      if (app && app.pagesCount > 0) {
+      var painted = !doc.querySelector('.loadingIcon') && doc.querySelector('.page canvas');
+      if (app && app.pagesCount > 0 && painted) {
         stopWatchdog();
         return;
       }
@@ -386,6 +390,7 @@
   renderChapter(current);
 
   frame.addEventListener('load', function () {
+    frameDoc = frame.contentDocument;
     loading.classList.add('hidden');
   });
   frame.addEventListener('load', setupLinkPanel);
