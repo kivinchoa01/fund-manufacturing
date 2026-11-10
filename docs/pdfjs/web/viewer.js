@@ -5815,7 +5815,7 @@ const defaultOptions = {
     kind: OptionKind.API + OptionKind.PREFERENCE
   },
   disableStream: {
-    value: false,
+    value: true,
     kind: OptionKind.API + OptionKind.PREFERENCE
   },
   docBaseUrl: {
@@ -15436,7 +15436,7 @@ class BasePreferences {
     "disableAutoFetch": false,
     "disableFontFace": false,
     "disableRange": false,
-    "disableStream": false,
+    "disableStream": true,
     "enableXfa": true
   });
   #prefs = Object.create(null);

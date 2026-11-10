@@ -108,7 +108,8 @@ python -m http.server 8000
 
 2. 演示模式（全屏）下不再把链接注释设为 `inert`：`AnnotationLayerBuilder.#updatePresentationModeState` 跳过 `linkAnnotation`，并在 `web/viewer.css` 中恢复 `section.linkAnnotation` 的 `pointer-events`（`:fullscreen` 与 `:-webkit-full-screen` 分开写，避免 Firefox 丢弃整条选择器）。
 3. `externalLinkTarget` 默认值改为 `2`（新标签页）。网页端由 `viewer.html` 拦截讲义内外部链接并改为站内浮层；只有点击浮层“新窗口”才打开独立窗口。
-4. `web/viewer.html` 中 `viewer.css` / `viewer.js` 带版本参数（当前 `?v=20261110`），修改后请同步更新，避免浏览器使用旧缓存。
+4. 将 `disableStream` 的默认值改为 `true`（`web/viewer.js` 的 AppOptions 默认值与 Preferences 默认值两处）。大文件改用 Range 分段读取，不再从头顺序下载整个 PDF，慢速网络下第一页能更快显示；服务器不支持 Range 时 PDF.js 会自动回退到完整下载。
+5. `web/viewer.html` 中 `viewer.css` / `viewer.js` 带版本参数（当前 `?v=20261111`），修改后请同步更新，避免浏览器使用旧缓存。
 
 阅读页通过 `docs/pdfjs/web/viewer.html?file=<PDF 地址>&locale=zh-CN#pagemode=none` 调用 PDF.js，其中 `locale=zh-CN` 启用中文界面。
 
